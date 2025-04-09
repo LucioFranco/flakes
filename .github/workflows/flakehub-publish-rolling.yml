@@ -5,6 +5,9 @@ on:
       - "main"
 jobs:
   flakehub-publish:
+    strategy:
+      matrix:
+        flake: [polars-dev, turmoil]
     runs-on: "ubuntu-latest"
     permissions:
       id-token: "write"
@@ -19,4 +22,4 @@ jobs:
           name: "LucioFranco/flakes"
           rolling: true
           visibility: "unlisted"
-          include-output-paths: true
+          directory: ${{ matrix.flake }}
