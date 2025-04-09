@@ -3,19 +3,20 @@
 
   inputs = {
     flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/*";
-    flake-schemas.url = "https://flakehub.com/f/DeterminateSystems/flake-schemas/*";
+    flake-schemas.url =
+      "https://flakehub.com/f/DeterminateSystems/flake-schemas/*";
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/*";
   };
 
   # Flake outputs that other flakes can use
-  outputs = { self, flake-compat, flake-schemas, nixpkgs }:
+  outputs = { flake-schemas, nixpkgs, ... }:
     let
       # Helpers for producing system-specific outputs
-      supportedSystems = [ "x86_64-linux" ];
+      supportedSystems = [ "x86_64-linux" "aarach64-darwin" ];
       overlays = [ ];
-      forEachSupportedSystem = f: nixpkgs.lib.genAttrs supportedSystems (system: f {
-        pkgs = import nixpkgs { inherit system overlays; };
-      });
+      forEachSupportedSystem = f:
+        nixpkgs.lib.genAttrs supportedSystems
+        (system: f { pkgs = import nixpkgs { inherit system overlays; }; });
     in {
       # Schemas tell Nix about the structure of your flake's outputs
       schemas = flake-schemas.schemas;
@@ -26,7 +27,7 @@
           # Pinned packages available in the environment
           packages = with pkgs; [
             python311
-            (with python311Packages; [  ])
+            (with python311Packages; [ ])
             nixpkgs-fmt
             dprint
             uv
@@ -53,7 +54,7 @@
               &&  MATURIN_PEP517_ARGS="--profile dev" uv pip install -r requirements-dev.txt
 
             source $VENV/bin/activate
-        '';
+          '';
         };
       });
     };
