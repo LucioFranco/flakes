@@ -19,7 +19,7 @@ jobs:
           determinate: true
       - uses: "DeterminateSystems/flakehub-push@main"
         with:
-          name: "LucioFranco/flakes"
+          name: "LucioFranco/${{ matrix.flake }}"
           rolling: true
           visibility: "unlisted"
           directory: ${{ matrix.flake }}
