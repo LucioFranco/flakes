@@ -12,7 +12,7 @@
   outputs = { flake-schemas, nixpkgs, ... }:
     let
       # Helpers for producing system-specific outputs
-      supportedSystems = [ "x86_64-linux" "aarach64-darwin" ];
+      supportedSystems = [ "x86_64-linux" "aarch64-darwin" ];
       overlays = [ ];
       forEachSupportedSystem = f:
         nixpkgs.lib.genAttrs supportedSystems
@@ -27,7 +27,6 @@
           # Pinned packages available in the environment
           packages = with pkgs; [
             python311
-            (with python311Packages; [ ])
             nixpkgs-fmt
             dprint
             uv
