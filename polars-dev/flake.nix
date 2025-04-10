@@ -2,6 +2,7 @@
 {
 
   inputs = {
+    fenix.url = "https://flakehub.com/f/nix-community/fenix/*";
     flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/*";
     flake-schemas.url =
       "https://flakehub.com/f/DeterminateSystems/flake-schemas/*";
@@ -9,11 +10,11 @@
   };
 
   # Flake outputs that other flakes can use
-  outputs = { flake-schemas, nixpkgs, ... }:
+  outputs = { flake-schemas, nixpkgs, fenix, ... }:
     let
       # Helpers for producing system-specific outputs
       supportedSystems = [ "x86_64-linux" "aarch64-darwin" ];
-      overlays = [ ];
+      overlays = [ fenix.overlays.default ];
       forEachSupportedSystem = f:
         nixpkgs.lib.genAttrs supportedSystems
         (system: f { pkgs = import nixpkgs { inherit system overlays; }; });
@@ -27,11 +28,12 @@
           # Pinned packages available in the environment
           packages = with pkgs; [
             python311
-            nixpkgs-fmt
+            nixfmt-classic
             dprint
             uv
             rustup
             protobuf
+            rust-analyzer-nightly
           ];
 
           shellHook = ''

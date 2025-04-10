@@ -19,6 +19,6 @@
         '';
       in {
         devShells.default =
-          pkgs.mkShell { packages = with pkgs; [ nixd nixfmt ]; };
+          pkgs.mkShell { packages = with pkgs; [ nixd nixfmt-classic ]; };
       });
 }
