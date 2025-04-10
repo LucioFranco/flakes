@@ -15,6 +15,7 @@
       # Helpers for producing system-specific outputs
       supportedSystems = [ "x86_64-linux" "aarch64-darwin" ];
       overlays = [ fenix.overlays.default ];
+      # fenix2 = fenix.packages."x86_64-linux";
       forEachSupportedSystem = f:
         nixpkgs.lib.genAttrs supportedSystems
         (system: f { pkgs = import nixpkgs { inherit system overlays; }; });
@@ -31,9 +32,16 @@
             nixfmt-classic
             dprint
             uv
-            rustup
             protobuf
-            rust-analyzer-nightly
+
+            (pkgs.fenix.complete.withComponents [
+              "cargo"
+              "clippy"
+              "rust-src"
+              "rustc"
+              "rustfmt"
+            ])
+            rust-analyzer
           ];
 
           shellHook = ''
