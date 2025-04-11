@@ -57,10 +57,10 @@
             export POLARS_CLOUD_GRPC_DOMAIN_PREFIX=main.grpc.api
             export POLARS_CLOUD_DOMAIN=dev.cloud.pola.rs
 
-            uv venv $VENV
+            # uv venv $VENV
 
-            unset CONDA_PREFIX \
-              &&  MATURIN_PEP517_ARGS="--profile dev" uv pip install -r requirements-dev.txt
+            # unset CONDA_PREFIX \
+            #   &&  MATURIN_PEP517_ARGS="--profile dev" uv pip install -r requirements-dev.txt
 
             source $VENV/bin/activate
           '';
