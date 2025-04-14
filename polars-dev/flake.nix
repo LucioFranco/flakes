@@ -36,6 +36,8 @@
             openssl_3_4
             postgresql_16
             sqlx-cli
+            nextest
+
 
             (pkgs.fenix.complete.withComponents [
               "cargo"
