@@ -34,6 +34,7 @@
             uv
             protobuf
             openssl_3_4
+            postgresql_16
 
             (pkgs.fenix.complete.withComponents [
               "cargo"
