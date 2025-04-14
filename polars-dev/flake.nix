@@ -6,7 +6,7 @@
     flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/*";
     flake-schemas.url =
       "https://flakehub.com/f/DeterminateSystems/flake-schemas/*";
-    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/*";
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
   };
 
   # Flake outputs that other flakes can use
@@ -33,7 +33,7 @@
             dprint
             uv
             protobuf
-            openssl
+            openssl_3_4
 
             (pkgs.fenix.complete.withComponents [
               "cargo"
@@ -48,7 +48,7 @@
           shellHook = ''
             export VENV=$(git rev-parse --show-toplevel)/.venv
 
-            export LD_LIBRARY_PATH=${pkgs.openssl.out}/lib:$LD_LIBRARY_PATH
+            export LD_LIBRARY_PATH=${pkgs.openssl_3_4.out}/lib:$LD_LIBRARY_PATH
 
             export PYO3_NO_REOCOMPILE=1
             export PYO3_NO_RECOMPILE=1
