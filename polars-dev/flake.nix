@@ -33,6 +33,7 @@
             dprint
             uv
             protobuf
+            openssl
 
             (pkgs.fenix.complete.withComponents [
               "cargo"
@@ -46,6 +47,8 @@
 
           shellHook = ''
             export VENV=$(git rev-parse --show-toplevel)/.venv
+
+            export LD_LIBRARY_PATH=${pkgs.openssl.out}/lib:$LD_LIBRARY_PATH
 
             export PYO3_NO_REOCOMPILE=1
             export PYO3_NO_RECOMPILE=1
