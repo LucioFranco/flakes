@@ -35,6 +35,7 @@
             protobuf
             openssl_3_4
             postgresql_16
+            sqlx-cli
 
             (pkgs.fenix.complete.withComponents [
               "cargo"
