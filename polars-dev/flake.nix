@@ -32,7 +32,7 @@
             cargo-nextest
             bunyan-rs
             bash
-
+            openssl_3_4
 
             (pkgs.fenix.complete.withComponents [
               "cargo"
@@ -40,27 +40,29 @@
               "rust-src"
               "rustc"
               "rustfmt"
+              "rust-analyzer"
             ])
-            rust-analyzer
           ];
 
           buildInputs = with pkgs; [
             gcc
             glibc
-            openssl_3_4
           ];
 
           shellHook = ''
             export VENV=$(git rev-parse --show-toplevel)/.venv
 
+            # Set `nix-ld` env vars for nixos users that need these to be able
+            # to run `ruff`.
             export NIX_LD=${pkgs.stdenv.cc.bintools.dynamicLinker}
-            
             export NIX_LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [
               pkgs.gcc
               pkgs.glibc
               pkgs.openssl_3_4
             ]}
-            #export LD_LIBRARY_PATH=${pkgs.openssl_3_4.out}/lib:$LD_LIBRARY_PATH
+
+            # Set openssl for `cargo test` to work.
+            export LD_LIBRARY_PATH=${pkgs.openssl_3_4.out}/lib:$LD_LIBRARY_PATH
 
             export PYO3_NO_REOCOMPILE=1
             export PYO3_NO_RECOMPILE=1
@@ -72,10 +74,12 @@
             export POLARS_CLOUD_GRPC_DOMAIN_PREFIX=main.grpc.api
             export POLARS_CLOUD_DOMAIN=dev.cloud.pola.rs
 
-            # uv venv $VENV
+            if [ ! -d $VENV ]; then
+              uv venv $VENV
 
-            # unset CONDA_PREFIX \
-            #   &&  MATURIN_PEP517_ARGS="--profile dev" uv pip install -r requirements-dev.txt
+              unset CONDA_PREFIX \
+                 &&  MATURIN_PEP517_ARGS="--profile dev" uv pip install -r requirements-dev.txt  
+            fi
 
             source $VENV/bin/activate
           '';
