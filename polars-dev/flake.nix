@@ -37,6 +37,7 @@
             postgresql_16
             sqlx-cli
             cargo-nextest
+            bunyan-rs
 
 
             (pkgs.fenix.complete.withComponents [
