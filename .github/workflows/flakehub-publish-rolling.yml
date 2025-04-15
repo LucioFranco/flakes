@@ -7,7 +7,7 @@ jobs:
   flakehub-publish:
     strategy:
       matrix:
-        flake: [polars-dev, turmoil dashlane-cli]
+        flake: [polars-dev, turmoil, dashlane-cli]
     runs-on: "ubuntu-latest"
     permissions:
       id-token: "write"
