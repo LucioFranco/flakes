@@ -3,17 +3,21 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = { nixpkgs, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
-        dashlane = pkgs.callPackage ./dashlane.nix { inherit pkgs; };
-      in {
-        overlays = final: prev: { default = dashlane; };
-        packages.default = dashlane;
-      });
+  outputs = inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; }
+    (top@{ config, withSystem, moduelWithSystem, ... }: {
+      systems = [ "x86_64-linux" ];
+
+      imports = [ inputs.flake-parts.flakeModules.easyOverlay ];
+
+      perSystem = { config, pkgs, ... }: {
+        overlayAttrs = { inherit (config.packages) dashlane-cli; };
+        packages.dashlane-cli =
+          pkgs.callPackage ./dashlane.nix { inherit pkgs; };
+      };
+    });
 }
 
