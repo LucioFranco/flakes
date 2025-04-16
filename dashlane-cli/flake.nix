@@ -12,7 +12,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         dashlane = pkgs.callPackage ./dashlane.nix { inherit pkgs; };
       in {
-        overlays.default = final: prev: { dashlane = dashlane; };
+        overlays = final: prev: { default = dashlane; };
         packages.default = dashlane;
       });
 }
