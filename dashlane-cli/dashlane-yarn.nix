@@ -51,8 +51,7 @@ let
       cd ./src/
       ${buildVars}
 
-      yarn plugin import https://raw.githubusercontent.com/stephank/yarn-plugin-nixify/main/dist/yarn-plugin-nixify.js
-
+      yarn plugin import ${yarnNixify}
 
       HOME="$TMP" yarn_enable_global_cache=false yarn_cache_folder="$out" \
         yarn nixify fetch
@@ -96,7 +95,6 @@ let
       # hardcoded values.
       runHook preConfigure
 
-
       # Run normal Yarn install to complete dependency installation.
       yarn install --immutable --immutable-cache
 
@@ -112,8 +110,8 @@ let
       runHook preInstall
 
       mkdir -p .git/refs/heads
-      echo "ref: refs/heads/master" > .git/HEAD
-      echo "423517344b4f328a297d7a87147f3be1c49e77a3" > .git/refs/heads/master
+      echo "fetchgit" > .git/refs/heads/fetchgit
+
       yarn run build
 
       # Move the package contents to the output directory.

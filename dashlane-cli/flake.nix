@@ -13,10 +13,11 @@
 
       imports = [ inputs.flake-parts.flakeModules.easyOverlay ];
 
-      perSystem = { config, pkgs, ... }: {
+      perSystem = { config, pkgs, self', ... }: {
         overlayAttrs = { inherit (config.packages) dashlane-cli; };
         packages.dashlane-cli =
           pkgs.callPackage ./dashlane.nix { inherit pkgs; };
+        packages.default = self'.packages.dashlane-cli;
       };
     });
 }
