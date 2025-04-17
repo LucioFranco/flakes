@@ -20,7 +20,9 @@
       schemas = flake-schemas.schemas;
 
       devShells = forEachSupportedSystem ({ pkgs }: {
-        default = pkgs.mkShell {
+        default = pkgs.mkShell (let
+          linuxOnlyPkgs = with pkgs; lib.optional stdenv.isLinux [ gcc glibc ];
+        in {
           packages = with pkgs; [
             python311
             nixfmt-classic
@@ -44,10 +46,7 @@
             ])
           ];
 
-          buildInputs = with pkgs; [
-            gcc
-            glibc
-          ];
+          buildInputs = [ ] ++ linuxOnlyPkgs;
 
           shellHook = ''
             export VENV=$(git rev-parse --show-toplevel)/.venv
@@ -55,11 +54,9 @@
             # Set `nix-ld` env vars for nixos users that need these to be able
             # to run `ruff`.
             export NIX_LD=${pkgs.stdenv.cc.bintools.dynamicLinker}
-            export NIX_LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [
-              pkgs.gcc
-              pkgs.glibc
-              pkgs.openssl_3_4
-            ]}
+            export NIX_LD_LIBRARY_PATH=${
+              pkgs.lib.makeLibraryPath ([ pkgs.openssl_3_4 ] ++ linuxOnlyPkgs)
+            }
 
             # Set openssl for `cargo test` to work.
             export LD_LIBRARY_PATH=${pkgs.openssl_3_4.out}/lib:$LD_LIBRARY_PATH
@@ -83,7 +80,7 @@
 
             source $VENV/bin/activate
           '';
-        };
+        });
       });
     };
 }
