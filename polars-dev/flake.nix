@@ -10,8 +10,7 @@
 
   outputs = { flake-schemas, nixpkgs, fenix, ... }:
     let
-      supportedSystems =
-        [ "x86_64-linux" "aarch64-darwin" "aarch64-linux" "x86_64-darwin" ];
+      supportedSystems = [ "x86_64-linux" "aarch64-darwin" "aarch64-linux" ];
       overlays = [ fenix.overlays.default ];
 
       forEachSupportedSystem = f:
@@ -23,8 +22,10 @@
       devShells = forEachSupportedSystem ({ pkgs }: {
         default = pkgs.mkShell (let
           linuxOnlyPkgs = with pkgs; lib.optional stdenv.isLinux [ gcc glibc ];
+          runtimePkgs = linuxOnlyPkgs;
         in {
           packages = with pkgs; [
+            git
             python311
             nixfmt-classic
             dprint
@@ -47,7 +48,7 @@
             ])
           ];
 
-          buildInputs = [ ] ++ linuxOnlyPkgs;
+          buildInputs = runtimePkgs;
 
           shellHook = ''
             export VENV=$(git rev-parse --show-toplevel)/.venv
@@ -56,7 +57,7 @@
             # to run `ruff`.
             export NIX_LD=${pkgs.stdenv.cc.bintools.dynamicLinker}
             export NIX_LD_LIBRARY_PATH=${
-              pkgs.lib.makeLibraryPath ([ pkgs.openssl_3_4 ] ++ linuxOnlyPkgs)
+              pkgs.lib.makeLibraryPath [ pkgs.gcc pkgs.glibc pkgs.openssl_3_4 ]
             }
 
             # Set openssl for `cargo test` to work.
