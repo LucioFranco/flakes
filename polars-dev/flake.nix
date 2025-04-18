@@ -10,7 +10,8 @@
 
   outputs = { flake-schemas, nixpkgs, fenix, ... }:
     let
-      supportedSystems = [ "x86_64-linux" "aarch64-darwin" ];
+      supportedSystems =
+        [ "x86_64-linux" "aarch64-darwin" "aarch64-linux" "x86_64-darwin" ];
       overlays = [ fenix.overlays.default ];
 
       forEachSupportedSystem = f:
