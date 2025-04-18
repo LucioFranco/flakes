@@ -21,7 +21,7 @@
 
       devShells = forEachSupportedSystem ({ pkgs }: {
         default = pkgs.mkShell (let
-          linuxOnlyPkgs = with pkgs; lib.optional stdenv.isLinux [ gcc glibc ];
+          linuxOnlyPkgs = with pkgs; lib.optional stdenv.isLinux [ gcc13 ];
           runtimePkgs = linuxOnlyPkgs;
         in {
           packages = with pkgs; [
