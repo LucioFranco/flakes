@@ -67,9 +67,7 @@
             # Jemmalloc compiled with gcc doesn't like when we ask for the
             # compiler to compile with fortify source so lets enable everything
             # but fortify and fortify3.
-            export NIX_HARDENING_ENABLE="bindnow format pic
-            relro stackclashprotection stackprotector strictoverflow
-            zerocallusedregs"
+            export NIX_HARDENING_ENABLE="bindnow format pic relro stackclashprotection stackprotector strictoverflow zerocallusedregs"
 
             # Set openssl for `cargo test` to work.
             export LD_LIBRARY_PATH=${pkgs.openssl_3_4.out}/lib:$LD_LIBRARY_PATH
