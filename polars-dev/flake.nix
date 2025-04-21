@@ -8,8 +8,7 @@
 
   outputs = inputs@{ flake-parts, ... }:
     # https://flake.parts/module-arguments.html
-    flake-parts.lib.mkFlake { inherit inputs; }
-    (top@{ config, withSystem, moduleWithSystem, ... }: {
+    flake-parts.lib.mkFlake { inherit inputs; } ({ ... }: {
       imports = [ ];
       flake = { };
       systems =
@@ -23,7 +22,7 @@
 
         devShells.default = pkgs.mkShell (let
           linuxOnlyPkgs = with pkgs;
-            lib.optionals stdenv.isLinux [ gcc13 glibc openssl_3_4 ];
+            lib.optionals stdenv.isLinux [ gcc13 openssl_3_4 ];
           runtimePkgs = linuxOnlyPkgs;
           rustToolchain = pkgs.fenix.toolchainOf {
             channel = "nightly";
@@ -64,6 +63,13 @@
             # to run `ruff`.
             export NIX_LD=${pkgs.stdenv.cc.bintools.dynamicLinker}
             export NIX_LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath linuxOnlyPkgs}
+
+            # Jemmalloc compiled with gcc doesn't like when we ask for the
+            # compiler to compile with fortify source so lets enable everything
+            # but fortify and fortify3.
+            export NIX_HARDENING_ENABLE="bindnow format pic
+            relro stackclashprotection stackprotector strictoverflow
+            zerocallusedregs"
 
             # Set openssl for `cargo test` to work.
             export LD_LIBRARY_PATH=${pkgs.openssl_3_4.out}/lib:$LD_LIBRARY_PATH
