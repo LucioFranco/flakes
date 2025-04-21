@@ -3,25 +3,27 @@
   inputs = {
     fenix.url = "https://flakehub.com/f/nix-community/fenix/*";
     flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/*";
-    flake-schemas.url =
-      "https://flakehub.com/f/DeterminateSystems/flake-schemas/*";
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
   };
 
-  outputs = { flake-schemas, nixpkgs, fenix, ... }:
-    let
-      supportedSystems = [ "x86_64-linux" "aarch64-darwin" "aarch64-linux" ];
-      overlays = [ fenix.overlays.default ];
+  outputs = inputs@{ flake-parts, ... }:
+    # https://flake.parts/module-arguments.html
+    flake-parts.lib.mkFlake { inherit inputs; }
+    (top@{ config, withSystem, moduleWithSystem, ... }: {
+      imports = [ ];
+      flake = { };
+      systems =
+        [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      perSystem = { system, pkgs, ... }: {
+        _module.args.pkgs = import inputs.nixpkgs {
+          inherit system;
+          overlays = [ inputs.fenix.overlays.default ];
+          config = { };
+        };
 
-      forEachSupportedSystem = f:
-        nixpkgs.lib.genAttrs supportedSystems
-        (system: f { pkgs = import nixpkgs { inherit system overlays; }; });
-    in {
-      schemas = flake-schemas.schemas;
-
-      devShells = forEachSupportedSystem ({ pkgs }: {
-        default = pkgs.mkShell (let
-          linuxOnlyPkgs = with pkgs; lib.optional stdenv.isLinux [ gcc13 ];
+        devShells.default = pkgs.mkShell (let
+          linuxOnlyPkgs = with pkgs;
+            lib.optionals stdenv.isLinux [ gcc13 glibc openssl_3_4 ];
           runtimePkgs = linuxOnlyPkgs;
           rustToolchain = pkgs.fenix.toolchainOf {
             channel = "nightly";
@@ -61,9 +63,7 @@
             # Set `nix-ld` env vars for nixos users that need these to be able
             # to run `ruff`.
             export NIX_LD=${pkgs.stdenv.cc.bintools.dynamicLinker}
-            export NIX_LD_LIBRARY_PATH=${
-              pkgs.lib.makeLibraryPath [ pkgs.gcc pkgs.glibc pkgs.openssl_3_4 ]
-            }
+            export NIX_LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath linuxOnlyPkgs}
 
             # Set openssl for `cargo test` to work.
             export LD_LIBRARY_PATH=${pkgs.openssl_3_4.out}/lib:$LD_LIBRARY_PATH
@@ -88,6 +88,6 @@
             source $VENV/bin/activate
           '';
         });
-      });
-    };
+      };
+    });
 }
