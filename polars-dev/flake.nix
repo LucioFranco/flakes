@@ -23,6 +23,11 @@
         default = pkgs.mkShell (let
           linuxOnlyPkgs = with pkgs; lib.optional stdenv.isLinux [ gcc13 ];
           runtimePkgs = linuxOnlyPkgs;
+          rustToolchain = pkgs.fenix.toolchainOf {
+            channel = "nightly";
+            date = "2025-04-19";
+            sha256 = "sha256-0VegWUJe3fqLko+gWT07cPLZs3y0oN1NQA7bKDeDG0I=";
+          };
         in {
           packages = with pkgs; [
             git
@@ -38,7 +43,7 @@
             bash
             openssl_3_4
 
-            (pkgs.fenix.complete.withComponents [
+            (rustToolchain.withComponents [
               "cargo"
               "clippy"
               "rust-src"
