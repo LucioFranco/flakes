@@ -38,8 +38,13 @@
             actionlint.enable = true;
             shellcheck.enable = true;
             ruff.enable = true;
-            clippy.enable = true;
             treefmt.enable = true;
+
+            polars-clippy = {
+              enable = true;
+              name = "polars-clippy";
+              entry = "make clippy";
+            };
           };
         };
 
@@ -53,6 +58,8 @@
           projectRootFile = ".git/config";
           flakeCheck = false; # Covered by git-hooks check
           settings.formatter = {
+            # Use a custom rustfmt because why not, if this stops working
+            # we can just start calling `make fmt`.
             "rustfmt-custom" = {
               command = "${pkgs.bash}/bin/bash";
               options = [
@@ -90,8 +97,8 @@
           };
           programs = {
             nixfmt-classic.enable = true;
-
             ruff-format.enable = true;
+            dprint.enable = true;
           };
         };
 
@@ -166,6 +173,8 @@
               unset CONDA_PREFIX \
                  &&  MATURIN_PEP517_ARGS="--profile dev" uv pip install -r requirements-dev.txt  
             fi
+
+            ${config.pre-commit.installationScript}
 
             source $VENV/bin/activate
           '';
