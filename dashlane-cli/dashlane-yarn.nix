@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 { lib, stdenv, nodejs, git, cacert, fetchurl, writeShellScript
-, writeShellScriptBin }:
+, writeShellScriptBin, }:
 { src, buildVars, overrideAttrs ? null, ... }@args:
 
 let

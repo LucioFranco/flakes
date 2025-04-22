@@ -26,4 +26,3 @@ in (import ./dashlane-yarn.nix {
     export PYTHON=${pkgs.python3.out}/bin/python
   '';
 }
-

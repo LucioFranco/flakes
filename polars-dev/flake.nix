@@ -4,20 +4,95 @@
     fenix.url = "https://flakehub.com/f/nix-community/fenix/*";
     flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/*";
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
+
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs = { nixpkgs.follows = "nixpkgs"; };
+    };
+
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ flake-parts, ... }:
-    # https://flake.parts/module-arguments.html
+  outputs = inputs@{ self, flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } ({ ... }: {
-      imports = [ ];
+      imports = [ inputs.git-hooks.flakeModule inputs.treefmt-nix.flakeModule ];
       flake = { };
       systems =
         [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
-      perSystem = { system, pkgs, ... }: {
+      perSystem = { config, system, pkgs, ... }: {
         _module.args.pkgs = import inputs.nixpkgs {
           inherit system;
           overlays = [ inputs.fenix.overlays.default ];
           config = { };
+        };
+
+        formatter = config.treefmt.build.wrapper;
+        checks.formatting = config.treefmt.build.check self;
+
+        pre-commit = {
+          check.enable = true;
+          settings.hooks = {
+            actionlint.enable = true;
+            shellcheck.enable = true;
+            ruff.enable = true;
+            clippy.enable = true;
+            treefmt.enable = true;
+          };
+        };
+
+        treefmt = let
+          rustToolchain = pkgs.fenix.toolchainOf {
+            channel = "nightly";
+            date = "2025-04-19";
+            sha256 = "sha256-0VegWUJe3fqLko+gWT07cPLZs3y0oN1NQA7bKDeDG0I=";
+          };
+        in {
+          projectRootFile = ".git/config";
+          flakeCheck = false; # Covered by git-hooks check
+          settings.formatter = {
+            "rustfmt-custom" = {
+              command = "${pkgs.bash}/bin/bash";
+              options = [
+                "-euc"
+                ''
+                  TARGET_DIR="compute-plane/crates/pc-mpchash"
+
+                  IGNORED_FILES=("control-plane/backend/crates/grpc/src/utils.rs") 
+
+                  is_ignored() {
+                    local target="$1"
+                    for ignored in $IGNORED_FILES; do
+                      [[ "$target" == "$ignored" ]] && return 0
+                    done
+                    return 1
+                  }
+
+                  for file in "$@"; do
+                    if is_ignored "$file"; then
+                      echo "Skipping ignored file: $file"
+                      continue
+                    fi
+
+                    if [[ "$file" != "$TARGET_DIR"/* ]]; then
+                      "${rustToolchain.rustfmt}/bin/rustfmt" --edition 2024 "$file"
+                    else
+                      "${rustToolchain.rustfmt}/bin/rustfmt" "$file"
+                    fi
+                  done 
+                ''
+                "--" # bash swallows the second argument when using -c
+              ];
+              includes = [ "*.rs" ];
+            };
+          };
+          programs = {
+            nixfmt-classic.enable = true;
+
+            ruff-format.enable = true;
+          };
         };
 
         devShells.default = pkgs.mkShell (let
@@ -30,29 +105,32 @@
             sha256 = "sha256-0VegWUJe3fqLko+gWT07cPLZs3y0oN1NQA7bKDeDG0I=";
           };
         in {
-          packages = with pkgs; [
-            git
-            python311
-            nixfmt-classic
-            dprint
-            uv
-            protobuf
-            postgresql_16
-            sqlx-cli
-            cargo-nextest
-            bunyan-rs
-            bash
-            openssl_3_4
+          packages = with pkgs;
+            [
+              git
+              python311
+              nixfmt-classic
+              dprint
+              uv
+              protobuf
+              postgresql_16
+              sqlx-cli
+              cargo-nextest
+              bunyan-rs
+              bash
+              openssl_3_4
 
-            (rustToolchain.withComponents [
-              "cargo"
-              "clippy"
-              "rust-src"
-              "rustc"
-              "rustfmt"
-              "rust-analyzer"
-            ])
-          ];
+              (rustToolchain.withComponents [
+                "cargo"
+                "clippy"
+                "rust-src"
+                "rustc"
+                "rustfmt"
+                "rust-analyzer"
+              ])
+
+              config.treefmt.build.wrapper
+            ] ++ (lib.attrValues config.treefmt.build.programs);
 
           buildInputs = runtimePkgs;
 
