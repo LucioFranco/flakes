@@ -36,9 +36,10 @@
           check.enable = true;
           settings.hooks = {
             actionlint.enable = true;
-            shellcheck.enable = true;
+            shellcheck.enable = false;
             ruff.enable = true;
             treefmt.enable = true;
+            typos.enable = true;
 
             polars-clippy = {
               enable = true;
@@ -126,6 +127,7 @@
               bunyan-rs
               bash
               openssl_3_4
+              pyright
 
               (rustToolchain.withComponents [
                 "cargo"
@@ -142,7 +144,9 @@
           buildInputs = runtimePkgs;
 
           shellHook = ''
-            export VENV=$(git rev-parse --show-toplevel)/.venv
+            # export WORKSPACE_ROOT=$(jj workspace root)
+            export WORKSPACE_ROOT=$(git rev-parse --show-toplevel)
+            export VENV=$WORKSPACE_ROOT/.venv
 
             if [ ! -d $VENV ]; then
               uv venv $VENV
