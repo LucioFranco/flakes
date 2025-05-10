@@ -30,7 +30,7 @@
         };
 
         formatter = config.treefmt.build.wrapper;
-        checks.formatting = config.treefmt.build.check self;
+        checks.formatting = config.treefmt.build.check;
 
         pre-commit = {
           check.enable = true;
@@ -112,6 +112,18 @@
             date = "2025-04-19";
             sha256 = "sha256-0VegWUJe3fqLko+gWT07cPLZs3y0oN1NQA7bKDeDG0I=";
           };
+          cargo-clean-all = pkgs.rustPlatform.buildRustPackage (let
+            rustSrc = pkgs.fetchFromGitHub {
+              owner = "dnlmlr";
+              repo = "cargo-clean-all";
+              rev = "70610d5afa0e11200ef96d23ea642eb05c98282e";
+              sha256 = "sha256-kSFshEoys0MjON3I70xPb7VEwmK4ne0ZsaLwpRZfhD0=";
+            };
+          in {
+            name = "cargo-clean-all";
+            src = rustSrc;
+            cargoLock.lockFile = "${rustSrc}/Cargo.lock";
+          });
         in {
           packages = with pkgs;
             [
@@ -128,6 +140,7 @@
               bash
               openssl_3_4
               pyright
+              cargo-clean-all 
 
               (rustToolchain.withComponents [
                 "cargo"
@@ -160,7 +173,7 @@
             # but fortify and fortify3.
             export NIX_HARDENING_ENABLE="bindnow format pic relro stackclashprotection stackprotector strictoverflow zerocallusedregs"
 
-            
+
             export PYO3_NO_REOCOMPILE=1
             export PYO3_NO_RECOMPILE=1
 
@@ -170,7 +183,9 @@
             # Set `nix-ld` env vars for nixos users that need these to be able
             # to run `ruff`.
             export NIX_LD=${pkgs.stdenv.cc.bintools.dynamicLinker}
-            export NIX_LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath linuxOnlyPkgs}:$PYTHON_SHARED_LIB"
+            export NIX_LD_LIBRARY_PATH="${
+              pkgs.lib.makeLibraryPath linuxOnlyPkgs
+            }:$PYTHON_SHARED_LIB"
             # Set openssl for `cargo test` to work.
             export LD_LIBRARY_PATH=${pkgs.openssl_3_4.out}/lib:$PYTHON_SHARED_LIB:$LD_LIBRARY_PATH
 
