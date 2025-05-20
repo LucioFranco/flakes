@@ -129,7 +129,6 @@
             [
               git
               python311
-              nixfmt-classic
               dprint
               uv
               protobuf
@@ -140,7 +139,8 @@
               bash
               openssl_3_4
               pyright
-              cargo-clean-all 
+              cargo-clean-all
+              gdb
 
               (rustToolchain.withComponents [
                 "cargo"
@@ -156,7 +156,31 @@
 
           buildInputs = runtimePkgs;
 
-          shellHook = ''
+          shellHook = let
+            # on macOS and Linux, use faster parallel linkers that are much more
+            # efficient than the defaults. these noticeably improve link time even for
+            # medium sized rust projects like jj
+            rustLinkerFlags = if pkgs.stdenv.isLinux then [
+              "-fuse-ld=mold"
+              "-Wl,--compress-debug-sections=zstd"
+            ] else if pkgs.stdenv.isDarwin then
+            # on darwin, /usr/bin/ld actually looks at the environment variable
+            # $DEVELOPER_DIR, which is set by the nix stdenv, and if set,
+            # automatically uses it to route the `ld` invocation to the binary
+            # within. in the devShell though, that isn't what we want; it's
+            # functional, but Xcode's linker as of ~v15 (not yet open source)
+            # is ultra-fast and very shiny; it is enabled via -ld_new, and on by
+            # default as of v16+
+            [
+              "--ld-path=$(unset DEVELOPER_DIR; /usr/bin/xcrun --find ld)"
+              "-ld_new"
+            ] else
+              [ ];
+
+            rustLinkFlagsString = pkgs.lib.concatStringsSep " "
+              (pkgs.lib.concatMap (x: [ "-C" "link-arg=${x}" ])
+                rustLinkerFlags);
+          in ''
             # export WORKSPACE_ROOT=$(jj workspace root)
             export WORKSPACE_ROOT=$(git rev-parse --show-toplevel)
             export VENV=$WORKSPACE_ROOT/.venv
@@ -173,12 +197,12 @@
             # but fortify and fortify3.
             export NIX_HARDENING_ENABLE="bindnow format pic relro stackclashprotection stackprotector strictoverflow zerocallusedregs"
 
-
             export PYO3_NO_REOCOMPILE=1
             export PYO3_NO_RECOMPILE=1
 
             export PYO3_PYTHON=$($VENV/bin/python -c "import sys,os; print(os.path.abspath(sys.executable))")
             export PYTHON_SHARED_LIB=$($VENV/bin/python -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+            # export PYTHON_SHARED_LIB="$VENV/lib"
 
             # Set `nix-ld` env vars for nixos users that need these to be able
             # to run `ruff`.
@@ -187,7 +211,7 @@
               pkgs.lib.makeLibraryPath linuxOnlyPkgs
             }:$PYTHON_SHARED_LIB"
             # Set openssl for `cargo test` to work.
-            export LD_LIBRARY_PATH=${pkgs.openssl_3_4.out}/lib:$PYTHON_SHARED_LIB:$LD_LIBRARY_PATH
+            export LD_LIBRARY_PATH="${pkgs.openssl_3_4.out}/lib:$PYTHON_SHARED_LIB"
 
 
             export POLARS_CLOUD_REST_DOMAIN_PREFIX=main.rest.api
@@ -196,7 +220,13 @@
 
             ${config.pre-commit.installationScript}
 
+            export RUSTFLAGS="-Zthreads=0 ${rustLinkFlagsString}"
+
+            export PYTHON_LIBS=$($VENV/bin/python -c "import site; print(site.getsitepackages()[0])")
+
             source $VENV/bin/activate
+
+            export PYTHONPATH="$PYTHONPATH:$VENV/lib/python3.11/site-packages"
           '';
         });
       };
